@@ -1,325 +1,243 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sliding Tic Tac Toe — Enhanced (Minimax AI)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#0f1724; --card:#0b1220; --accent:#7c3aed; --muted:rgba(255,255,255,0.65);
-      --glass: rgba(255,255,255,0.03);
+<meta charset="UTF-8">
+<title>3-Token Tic Tac Toe</title>
+<style>
+    body {
+        background: #101010;
+        color: white;
+        font-family: Arial;
+        text-align: center;
+        padding-top: 40px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent 8%),
-                  radial-gradient(800px 400px at 90% 90%, rgba(3,105,161,0.1), transparent 6%),
-                  var(--bg);
-      color:#e6eef8; display:flex; align-items:center; justify-content:center; padding:32px;
+    #board {
+        width: 300px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        gap: 5px;
     }
-    .wrap{width:980px; max-width:95%; display:grid; grid-template-columns: 420px 1fr; gap:28px; align-items:start}
-
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:18px; box-shadow: 0 8px 30px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03)}
-
-    .title{display:flex; gap:12px; align-items:center}
-    .logo{width:56px; height:56px; border-radius:10px; background:linear-gradient(135deg,var(--accent), #0369a1); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px}
-    h1{margin:0;font-size:20px}
-    p.lead{margin:8px 0 0;color:var(--muted);font-size:13px}
-
-    .board-area{display:flex; flex-direction:column; align-items:center; gap:12px}
-    .board{
-      width:360px; height:360px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:12px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; box-shadow: inset 0 2px 8px rgba(255,255,255,0.02);
+    .cell {
+        width: 100px;
+        height: 100px;
+        background: #1e1e1e;
+        border-radius: 15px;
+        font-size: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: 0.2s;
     }
-    .cell{
-      background:var(--glass); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:64px; cursor:pointer; user-select:none; position:relative; overflow:hidden;
-      transition: transform 180ms cubic-bezier(.2,.9,.3,1), background 160ms;
+    .fading {
+        opacity: 0.4;
     }
-    .cell:hover{transform:translateY(-4px)}
-    .mark{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:64px; transform:scale(0.85); opacity:0; transition: transform 240ms cubic-bezier(.2,.9,.3,1), opacity 220ms}
-    .mark.show{opacity:1; transform:scale(1);}
-    .mark.x{color:#ffbe0b; text-shadow:0 6px 18px rgba(255,190,11,0.08)}
-    .mark.o{color:#60a5fa; text-shadow:0 6px 18px rgba(96,165,250,0.06)}
 
-    .transparent{opacity:0.28}
-
-    .controls{display:flex; gap:10px; align-items:center; margin-top:6px}
-    .btn{background:linear-gradient(90deg,var(--accent), #0369a1); padding:10px 14px; border-radius:10px; border:none;color:white;font-weight:600; cursor:pointer}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-
-    .meta{display:flex; flex-direction:column; gap:8px}
-    .status{font-weight:700}
-    .sub{color:var(--muted); font-size:13px}
-
-    .right-panel{display:flex; flex-direction:column; gap:12px}
-    .stats{display:flex; gap:12px; flex-wrap:wrap}
-    .stat{flex:1; min-width:150px; padding:12px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.02)}
-    .stat strong{display:block; font-size:20px}
-
-    .moves{display:flex; gap:8px; flex-wrap:wrap}
-    .chip{background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:8px; font-size:13px}
-
-    .footer{margin-top:8px; color:var(--muted); font-size:13px}
-
-    .highlight-line{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none}
-    .win-strip{background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); height:84px; width:100%; border-radius:8px; transform:scaleX(0); transition: transform 420ms cubic-bezier(.2,.9,.3,1)}
-    .win-strip.show{transform:scaleX(1)}
-
-    @media(max-width:880px){.wrap{grid-template-columns:1fr} .board{width:300px;height:300px}}
-  </style>
+    /* Popup */
+    #popup {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+    #popupBox {
+        background: #222;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        width: 250px;
+    }
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        background: #444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="title">
-        <div class="logo">T3</div>
-        <div>
-          <h1>Sliding Tic‑Tac‑Toe</h1>
-          <p class="lead">Only your last 3 pieces stay. The oldest piece fades before it vanishes. You (X) vs AI (O) — AI uses minimax + alpha‑beta with memoization.</p>
-        </div>
-      </div>
 
-      <div style="height:18px"></div>
+<h1>3-Token Tic Tac Toe</h1>
+<h3 id="score">You 0 — 0 AI</h3>
 
-      <div class="board-area">
-        <div style="position:relative">
-          <div class="board" id="board"></div>
-        </div>
+<div id="board"></div>
 
-        <div class="controls">
-          <button class="btn" id="restart">Restart</button>
-          <button class="btn ghost" id="undo">Undo</button>
-          <label style="margin-left:auto; display:flex; gap:8px; align-items:center"><input type="checkbox" id="sound" checked> Sound</label>
-        </div>
-
-        <div class="meta">
-          <div class="status" id="status">Your turn — X</div>
-          <div class="sub" id="hint">Oldest piece will fade when you have 3 pieces on board.</div>
-        </div>
-      </div>
+<div id="popup">
+    <div id="popupBox">
+        <h2 id="resultText"></h2>
+        <button onclick="restartGame()">Play Again</button>
+        <button onclick="resetAll()">Reset Score</button>
     </div>
-
-    <div class="right-panel">
-      <div class="card stat">
-        <strong id="score">0 — 0</strong>
-        <div class="sub">Wins (You — AI)</div>
-      </div>
-
-      <div class="card stat">
-        <div style="font-weight:700">Moves</div>
-        <div class="moves" id="moveList"></div>
-      </div>
-
-      <div class="card stat">
-        <div style="font-weight:700">AI Settings</div>
-        <div style="margin-top:8px; display:flex; gap:8px; align-items:center">
-          <label class="chip">Depth: <select id="depth"><option value="4">4</option><option value="6" selected>6</option><option value="8">8</option><option value="10">10</option></select></label>
-          <label class="chip">Difficulty: <select id="difficulty"><option value="smart">Smart (minimax)</option><option value="random">Random</option></select></label>
-        </div>
-        <div class="footer">Higher depth = stronger AI but slower on old devices.</div>
-      </div>
-
-      <div class="card stat">
-        <div style="font-weight:700">How it works</div>
-        <div class="sub">When you place a 4th piece, your oldest disappears. The translucent piece shows which will vanish on next move. AI uses minimax with alpha‑beta and memoization.</div>
-      </div>
-    </div>
-  </div>
+</div>
 
 <script>
-// Game state
-const boardEl = document.getElementById('board');
-const statusEl = document.getElementById('status');
-const moveListEl = document.getElementById('moveList');
-const scoreEl = document.getElementById('score');
-const depthSel = document.getElementById('depth');
-const difficultySel = document.getElementById('difficulty');
-const undoBtn = document.getElementById('undo');
+let board = ["","","","","","","","",""];
+let player = "X";
+let ai = "O";
 
-let board = Array(9).fill('');
-let playerMoves = []; // X
-let aiMoves = [];     // O
-let history = []; // for undo (store full snapshots)
-let currentPlayer = 'X';
-let gameOver = false;
-let scores = {x:0,o:0};
-let soundOn = true;
+let playerMoves = [];
+let aiMoves = [];
 
-const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let scorePlayer = 0, scoreAI = 0;
 
-// Preload simple clicks
-const sounds = {
-  place: new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA'),
-  win: new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA')
-};
+const winPatterns = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+];
 
-function play(s){ if(soundOn && sounds[s]){ try{ sounds[s].currentTime=0; sounds[s].play(); }catch(e){} }}
-
-// Build board cells
-for(let i=0;i<9;i++){
-  const c = document.createElement('div');
-  c.className='cell';
-  c.dataset.idx=i;
-  const mark = document.createElement('div');
-  mark.className='mark';
-  c.appendChild(mark);
-  c.addEventListener('click', ()=>handleClick(i));
-  boardEl.appendChild(c);
-}
-
-function snapshot(){ return {board:board.slice(), playerMoves:playerMoves.slice(), aiMoves:aiMoves.slice(), currentPlayer, gameOver}; }
-
-function restore(s){ board = s.board.slice(); playerMoves = s.playerMoves.slice(); aiMoves = s.aiMoves.slice(); currentPlayer = s.currentPlayer; gameOver = s.gameOver; render(); }
-
-function pushHistory(){ history.push(snapshot()); if(history.length>50) history.shift(); }
-
-undoBtn.onclick = ()=>{
-  if(history.length>0){ const s=history.pop(); restore(s); statusEl.textContent='Undone'; }
-}
-
-function handleClick(i){ if(gameOver || currentPlayer!=='X' || board[i]!=='') return; pushHistory(); makeMove(i,'X'); }
-
-function render(){
-  document.querySelectorAll('.cell').forEach((cell,idx)=>{
-    const mark = cell.querySelector('.mark');
-    const v = board[idx];
-    mark.textContent = v;
-    mark.classList.remove('show','x','o');
-    if(v){ mark.classList.add('show', v.toLowerCase()); }
-    cell.classList.toggle('transparent', shouldBeTransparent(idx));
-  });
-  // moves list
-  moveListEl.innerHTML='';
-  playerMoves.forEach((m,i)=>{ const d = document.createElement('div'); d.className='chip'; d.textContent='X@'+(m+1); moveListEl.appendChild(d); });
-  aiMoves.forEach((m,i)=>{ const d = document.createElement('div'); d.className='chip'; d.textContent='O@'+(m+1); moveListEl.appendChild(d); });
-  scoreEl.textContent = `${scores.x} — ${scores.o}`;
-}
-
-function shouldBeTransparent(idx){ // if that idx is the oldest move for either player and they have 3 pieces
-  if(playerMoves.length>=3 && playerMoves[0]===idx) return true;
-  if(aiMoves.length>=3 && aiMoves[0]===idx) return true;
-  return false;
-}
-
-function makeMove(i, symbol){
-  if(board[i]!=='') return;
-  play('place');
-  // apply move
-  board[i]=symbol;
-  if(symbol==='X'){
-    playerMoves.push(i);
-    if(playerMoves.length>3){ const old=playerMoves.shift(); board[old]=''; }
-  }else{
-    aiMoves.push(i);
-    if(aiMoves.length>3){ const old=aiMoves.shift(); board[old]=''; }
-  }
-  render();
-  // check win
-  if(checkWin(symbol)) return finishGame(symbol);
-  // check draw (no empties?) but sliding means game may continue; treat full-empty case
-  if(board.filter(b=>b==='').length===0){ // no empty, no winner => draw
-    finishGame(null);
-    return;
-  }
-  // switch
-  currentPlayer = (symbol==='X') ? 'O':'X';
-  statusEl.textContent = currentPlayer==='X' ? 'Your turn — X' : 'AI thinking...';
-  if(currentPlayer==='O') setTimeout(() => aiTurn(), 350);
-}
-
-function finishGame(symbol){ gameOver=true; if(symbol==='X'){ statusEl.textContent='You win!'; scores.x++; play('win'); }else if(symbol==='O'){ statusEl.textContent='AI wins!'; scores.o++; play('win'); }else{ statusEl.textContent='Draw'; }
-}
-
-function checkWin(sym){ return wins.some(line=>line.every(i=>board[i]===sym)); }
-
-// ========== AI (minimax + alpha-beta + memo) ==========
-
-function aiTurn(){
-  if(difficultySel.value==='random'){
-    const empt = board.map((v,i)=>v===''?i:null).filter(v=>v!==null);
-    const pick = empt[Math.floor(Math.random()*empt.length)];
-    pushHistory(); makeMove(pick,'O');
-    return;
-  }
-
-  pushHistory();
-  const depthLimit = parseInt(depthSel.value,10);
-  const start = performance.now();
-  const move = findBestMove(board.slice(), playerMoves.slice(), aiMoves.slice(), depthLimit);
-  const took = Math.round(performance.now()-start);
-  // small delay for UX
-  setTimeout(()=>{ makeMove(move,'O'); }, Math.min(600, 200 + Math.min(400,took)));
-}
-
-function serializeState(b, pm, am, turn){ return b.join('') + '|' + pm.join(',') + '|' + am.join(',') + '|' + turn; }
-
-const memo = new Map();
-
-function findBestMove(b, pm, am, depthLimit){
-  // try immediate win
-  const empt = b.map((v,i)=>v===''?i:null).filter(v=>v!==null);
-  for(const i of empt){ // try win
-    const nb = b.slice(); const npm = pm.slice(); const nam = am.slice();
-    nb[i]='O'; nam.push(i); if(nam.length>3){ const old=nam.shift(); nb[old]=''; }
-    if(isWin(nb,'O')) return i;
-  }
-  // block immediate player win
-  for(const i of empt){ const nb=b.slice(); const npm=pm.slice(); const nam=am.slice(); nb[i]='X'; npm.push(i); if(npm.length>3){ const old=npm.shift(); nb[old]=''; } if(isWin(nb,'X')) return i; }
-
-  // otherwise minimax
-  let best=-Infinity; let bestMove=null; const alpha=-Infinity; const beta=Infinity;
-  for(const i of empt){ const nb=b.slice(); const npm=pm.slice(); const nam=am.slice(); nb[i]='O'; nam.push(i); if(nam.length>3){ const old=nam.shift(); nb[old]=''; }
-    const score = minimax(nb, npm, nam, 'X', depthLimit-1, -Infinity, Infinity);
-    if(score>best){ best=score; bestMove=i; }
-  }
-  if(bestMove===null) return empt[Math.floor(Math.random()*empt.length)];
-  return bestMove;
-}
-
-function isWin(b, sym){ return wins.some(line=>line.every(i=>b[i]===sym)); }
-
-function minimax(b, pm, am, turn, depth, alpha, beta){
-  const key = serializeState(b,pm,am,turn)+'|d'+depth;
-  if(memo.has(key)) return memo.get(key);
-
-  if(isWin(b,'O')) return 100 + depth; // prefer faster wins
-  if(isWin(b,'X')) return -100 - depth; // avoid losses
-  const empt = b.map((v,i)=>v===''?i:null).filter(v=>v!==null);
-  if(depth<=0 || empt.length===0) return 0;
-
-  if(turn==='O'){
-    let maxEval=-Infinity;
-    for(const i of empt){ const nb=b.slice(); const npm=pm.slice(); const nam=am.slice(); nb[i]='O'; nam.push(i); if(nam.length>3){ const old=nam.shift(); nb[old]=''; }
-      const evalScore = minimax(nb,npm,nam,'X',depth-1,alpha,beta);
-      maxEval = Math.max(maxEval, evalScore);
-      alpha = Math.max(alpha, evalScore);
-      if(beta<=alpha) break;
+function createBoard() {
+    const b = document.getElementById("board");
+    b.innerHTML = "";
+    for (let i=0; i<9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.onclick = () => playerClick(i);
+        b.appendChild(cell);
     }
-    memo.set(key,maxEval); return maxEval;
-  }else{
-    let minEval=Infinity;
-    for(const i of empt){ const nb=b.slice(); const npm=pm.slice(); const nam=am.slice(); nb[i]='X'; npm.push(i); if(npm.length>3){ const old=npm.shift(); nb[old]=''; }
-      const evalScore = minimax(nb,npm,nam,'O',depth-1,alpha,beta);
-      minEval = Math.min(minEval, evalScore);
-      beta = Math.min(beta, evalScore);
-      if(beta<=alpha) break;
-    }
-    memo.set(key,minEval); return minEval;
-  }
+    updateUI();
+}
+createBoard();
+
+function updateUI() {
+    const cells = document.querySelectorAll(".cell");
+    cells.forEach((c,i)=>{
+        c.textContent = board[i];
+        c.classList.remove("fading");
+
+        // Make next-to-disappear move transparent
+        if (playerMoves[0] === i && playerMoves.length === 3) {
+            c.classList.add("fading");
+        }
+        if (aiMoves[0] === i && aiMoves.length === 3) {
+            c.classList.add("fading");
+        }
+    });
 }
 
-// Controls
-document.getElementById('restart').onclick = ()=>{ pushHistory(); reset(); };
-document.getElementById('sound').addEventListener('change', (e)=>{ soundOn = e.target.checked; });
+function playerClick(i) {
+    if (board[i] !== "") {
+        // Allow clicking faded piece to recycle it
+        if (playerMoves[0] === i) {
+            placePlayer(i, true);
+        }
+        return;
+    }
+    placePlayer(i, false);
+}
 
-function reset(){ board = Array(9).fill(''); playerMoves=[]; aiMoves=[]; history=[]; currentPlayer='X'; gameOver=false; memo.clear(); statusEl.textContent='Your turn — X'; render(); }
+function placePlayer(i, recycled) {
+    if (!recycled) {
+        board[i] = player;
+        playerMoves.push(i);
+    } else {
+        // Recycle oldest
+        let old = playerMoves.shift();
+        board[old] = "";
+        board[i] = player;
+        playerMoves.push(i);
+    }
 
-// initial render
-reset();
+    if (playerMoves.length > 3) {
+        let old = playerMoves.shift();
+        board[old] = "";
+    }
+
+    updateUI();
+    if (checkWin(player)) return endGame("You Win!");
+    if (isDraw()) return endGame("Draw!");
+
+    setTimeout(aiMove, 300);
+}
+
+function aiMove() {
+    let best = bestMove();
+    let i = best;
+
+    // Recycle AI transparent piece if clicking same faded cell
+    if (board[i] !== "" && aiMoves[0] === i) {
+        placeAI(i, true);
+        return;
+    }
+
+    placeAI(i, false);
+}
+
+function placeAI(i, recycled) {
+    if (!recycled) {
+        board[i] = ai;
+        aiMoves.push(i);
+    } else {
+        let old = aiMoves.shift();
+        board[old] = "";
+        board[i] = ai;
+        aiMoves.push(i);
+    }
+
+    if (aiMoves.length > 3) {
+        let old = aiMoves.shift();
+        board[old] = "";
+    }
+
+    updateUI();
+    if (checkWin(ai)) return endGame("AI Wins!");
+    if (isDraw()) return endGame("Draw!");
+}
+
+function checkWin(symbol) {
+    return winPatterns.some(p => 
+        p.every(i => board[i] === symbol)
+    );
+}
+
+function isDraw() {
+    return board.every(c => c !== "");
+}
+
+function bestMove() {
+    // Simple AI: choose any empty, or replace its fading
+    // (can replace with minimax later)
+    for (let i=0; i<9; i++) {
+        if (board[i] === "") return i;
+    }
+    return aiMoves[0]; // fallback
+}
+
+// ---------------- Popup ----------------
+function endGame(text) {
+    if (text === "You Win!") scorePlayer++;
+    if (text === "AI Wins!") scoreAI++;
+
+    document.getElementById("score").textContent =
+        `You ${scorePlayer} — ${scoreAI} AI`;
+
+    document.getElementById("resultText").textContent = text;
+    document.getElementById("popup").style.display = "flex";
+}
+
+function restartGame() {
+    board = ["","","","","","","","",""];
+    playerMoves = [];
+    aiMoves = [];
+    document.getElementById("popup").style.display = "none";
+    createBoard();
+}
+
+function resetAll() {
+    scorePlayer = 0;
+    scoreAI = 0;
+    restartGame();
+    document.getElementById("score").textContent = "You 0 — 0 AI";
+}
 </script>
+
 </body>
 </html>

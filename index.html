@@ -1,796 +1,242 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sliding Tic Tac Toe — Pro Edition</title>
+<meta charset="UTF-8">
+<title>3-Token Tic Tac Toe</title>
+<style>
+    body {
+        background: #101010;
+        color: white;
+        font-family: Arial;
+        text-align: center;
+        padding-top: 40px;
+    }
+    #board {
+        width: 300px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        gap: 5px;
+    }
+    .cell {
+        width: 100px;
+        height: 100px;
+        background: #1e1e1e;
+        border-radius: 15px;
+        font-size: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .fading {
+        opacity: 0.4;
+    }
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    /* ===========================================================
-       GLOBAL THEME (Copied from the new UI)
-    ============================================================ */
-    :root {
-      --bg: #0d1320;
-      --panel: #101726;
-      --card: rgba(255,255,255,0.03);
-      --accent: #7c3aed;
-      --accent2: #3b82f6;
-      --muted: rgba(255,255,255,0.65);
-      --border: rgba(255,255,255,0.06);
-      --radius: 16px;
-      --shadow: 0 8px 32px rgba(0,0,0,0.45);
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, sans-serif;
-      background: 
-        radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.25), transparent 40%),
-        radial-gradient(900px 500px at 90% 90%, rgba(59,130,246,0.18), transparent 35%),
-        var(--bg);
-      color: #e5e9f5;
-      display: flex;
-      justify-content: center;
-      padding: 32px;
-    }
-
-    /* ===========================================================
-       LAYOUT (Copied from the new UI)
-    ============================================================ */
-    .wrap {
-      width: 1080px;
-      max-width: 95%;
-      display: grid;
-      grid-template-columns: 450px 1fr;
-      gap: 32px;
-      align-items: start;
-    }
-
-    @media(max-width: 950px) {
-      .wrap {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* ===========================================================
-       CARD / PANELS (Copied from the new UI)
-    ============================================================ */
-    .card {
-      background: var(--panel);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      backdrop-filter: blur(14px);
-    }
-
-    .section {
-      margin-bottom: 16px;
-    }
-
-    /* ===========================================================
-       HEADER (Copied from the new UI)
-    ============================================================ */
-    .title {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-    }
-
-    .logo {
-      width: 60px;
-      height: 60px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 20px;
-      color: #fff;
-      box-shadow: 0 6px 22px rgba(124,58,237,0.35);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    .lead {
-      margin: 6px 0 0;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    /* ===========================================================
-       BOARD (Copied from the new UI)
-    ============================================================ */
-    .board-area {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 12px;
-      align-items: center;
-    }
-
-    .board {
-      width: 370px;
-      height: 370px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      padding: 14px;
-      background: var(--card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-    }
-
-    @media(max-width: 950px){
-      .board {
-        width: 300px;
-        height: 300px;
-      }
-    }
-
-    .cell {
-      background: rgba(255,255,255,0.04);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 64px;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 180ms, background 180ms;
-      position: relative;
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-
-    .cell:hover {
-      transform: translateY(-4px);
-      background: rgba(255,255,255,0.08);
-    }
-
-    .mark {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 62px;
-      transform: scale(0.85);
-      opacity: 0;
-      transition: 220ms opacity, 240ms transform;
-    }
-
-    .mark.show {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    .mark.x {
-      color: #ffbe0b;
-      text-shadow: 0 6px 18px rgba(255,190,11,0.28);
-    }
-
-    .mark.o {
-      color: #60a5fa;
-      text-shadow: 0 6px 18px rgba(96,165,250,0.28);
-    }
-
-    .transparent {
-      opacity: 0.28;
-    }
-
-    /* ===========================================================
-       CONTROLS (Copied from the new UI)
-    ============================================================ */
-    .controls {
-      display: flex;
-      gap: 12px;
-      width: 100%;
-    }
-
-    .btn {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(124,58,237,0.25);
-      transition: 180ms transform;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .btn.ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: #fff;
-      box-shadow: none;
-    }
-
-    .meta .status {
-      font-weight: 700;
-      font-size: 15px;
-    }
-
-    .meta .sub {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    /* ===========================================================
-       RIGHT PANEL (STATS / MOVES / SETTINGS) (Copied from the new UI)
-    ============================================================ */
-    .stat {
-      background: var(--card);
-      padding: 16px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      margin-bottom: 12px; /* Added spacing */
-    }
-
-    .stat-title {
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .moves {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      padding: 6px 10px;
-      border-radius: 10px;
-      font-size: 13px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-
-    select {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--border);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 8px;
-      outline: none;
-    }
-
-    .footer {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* ===========================================================
-       POPUP (Modified from original to fit new styling)
-    ============================================================ */
-    #popup {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 100;
-    }
-    #popupBox {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        padding: 20px;
-        border-radius: var(--radius);
-        text-align: center;
-        width: 280px;
-        box-shadow: var(--shadow);
-    }
-    #popupBox h2 {
-      margin-top: 0;
-    }
-    #popupBox button {
-      margin: 8px;
-    }
-
-  </style>
+    /* Popup */
+    #popup {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+    #popupBox {
+        background: #222;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        width: 250px;
+    }
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        background: #444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+</style>
 </head>
-
 <body>
-  <div class="wrap">
 
-        <div class="card">
+<h1>3-Token Tic Tac Toe</h1>
+<h3 id="score">You 0 — 0 AI</h3>
 
-            <div class="title">
-        <div class="logo">T3</div>
-        <div>
-          <h1>Sliding Tic-Tac-Toe</h1>
-          <p class="lead">
-            Only your last 3 pieces stay. Oldest piece fades before disappearing.
-            You (X) vs AI (O) — powered by minimax + alpha-beta + memoization.
-          </p>
-        </div>
-      </div>
+<div id="board"></div>
 
-            <div class="board-area">
-        <div class="board" id="board">
-                  </div>
-
-                <div class="controls">
-          <button class="btn" id="restart">Restart</button>
-          <button class="btn ghost" id="undo">Undo</button>
-          <label style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-            <input type="checkbox" id="sound" checked> Sound
-          </label>
-        </div>
-
-        <div class="meta">
-          <div class="status" id="status">Your turn — X</div>
-          <div class="sub" id="hint">Oldest piece will fade when you have 3 pieces.</div>
-        </div>
-      </div>
-    </div>
-
-        <div class="card">
-
-      <div class="stat">
-        <div class="stat-title">Score</div>
-        <strong id="score" style="font-size:22px;">0 — 0</strong>
-        <div class="sub">You — AI</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-title">Moves</div>
-        <div class="moves" id="moveList"></div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-title">AI Settings</div>
-
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-          <label class="chip">
-            Depth:
-            <select id="depth">
-              <option value="4">4</option>
-              <option value="6" selected>6</option>
-              <option value="8">8</option>
-              <option value="10">10</option>
-            </select>
-          </label>
-
-          <label class="chip">
-            Difficulty:
-            <select id="difficulty">
-              <option value="smart">Smart (Minimax)</option>
-              <option value="random">Random</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="footer">Higher depth = stronger AI but may be slower on older phones.</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-title">How it works</div>
-        <div class="sub">
-          When you place a 4th piece, your oldest disappears.  
-          The transparent piece indicates which will vanish next.  
-          AI uses minimax with alpha-beta pruning and memoization.
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-  
-    <div id="popup">
-    <div id="popupBox">
-        <h2 id="resultText"></h2>
-        <button class="btn" onclick="restartGame()">Play Again</button>
-        <button class="btn ghost" onclick="resetAll()">Reset Score</button>
-    </div>
-  </div>
+<div id="popup">
+    <div id="popupBox">
+        <h2 id="resultText"></h2>
+        <button onclick="restartGame()">Play Again</button>
+        <button onclick="resetAll()">Reset Score</button>
+    </div>
+</div>
 
 <script>
-/* ===========================================================
-   GAME STATE
-============================================================ */
 let board = ["","","","","","","","",""];
-const player = "X";
-const ai = "O";
-let currentPlayer = player; // X always starts
+let player = "X";
+let ai = "O";
 
 let playerMoves = [];
 let aiMoves = [];
-let gameHistory = []; // For Undo functionality
 
-let scorePlayer = 0;
-let scoreAI = 0;
-let gameActive = true;
+let scorePlayer = 0, scoreAI = 0;
 
 const winPatterns = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
 ];
 
-// Cache for Minimax results (Memoization)
-let memo = {};
-
-/* ===========================================================
-   UI INITIALIZATION & UPDATES
-============================================================ */
-
-const elBoard = document.getElementById("board");
-const elStatus = document.getElementById("status");
-const elScore = document.getElementById("score");
-const elMoveList = document.getElementById("moveList");
-const elRestart = document.getElementById("restart");
-const elUndo = document.getElementById("undo");
-const elDepth = document.getElementById("depth");
-const elDifficulty = document.getElementById("difficulty");
-
-
-function saveState() {
-    // Save a deep copy of the current state
-    gameHistory.push({
-        board: [...board],
-        playerMoves: [...playerMoves],
-        aiMoves: [...aiMoves],
-        currentPlayer: currentPlayer
-    });
-    elUndo.disabled = gameHistory.length <= 1;
-}
-
 function createBoard() {
-    elBoard.innerHTML = "";
-    for (let i=0; i<9; i++) {
-        const cell = document.createElement("div");
-        cell.classList.add("cell");
-        cell.dataset.index = i;
-        cell.onclick = () => playerClick(i);
-        
-        // Add the inner mark element for styling
-        const mark = document.createElement("div");
-        mark.classList.add("mark");
-        cell.appendChild(mark);
-        
-        elBoard.appendChild(cell);
-    }
-    updateUI();
+    const b = document.getElementById("board");
+    b.innerHTML = "";
+    for (let i=0; i<9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.onclick = () => playerClick(i);
+        b.appendChild(cell);
+    }
+    updateUI();
 }
+createBoard();
 
 function updateUI() {
-    const cells = document.querySelectorAll(".cell");
-    const moveLog = [];
-    
-    cells.forEach((cell, i) => {
-        const markEl = cell.querySelector(".mark");
-        
-        markEl.textContent = board[i];
-        markEl.className = 'mark'; // Reset classes
-        
-        if (board[i] !== "") {
-            markEl.classList.add("show", board[i].toLowerCase());
+    const cells = document.querySelectorAll(".cell");
+    cells.forEach((c,i)=>{
+        c.textContent = board[i];
+        c.classList.remove("fading");
 
-            // Check for the oldest piece to fade
-            const isPlayerFading = playerMoves.length === 3 && playerMoves[0] === i;
-            const isAiFading = aiMoves.length === 3 && aiMoves[0] === i;
-            
-            if (isPlayerFading || isAiFading) {
-                markEl.classList.add("transparent");
-            }
-
-            // Build move log for display
-            if (playerMoves.includes(i)) moveLog.push({ player: 'X', index: i });
-            if (aiMoves.includes(i)) moveLog.push({ player: 'O', index: i });
-
-        }
-    });
-    
-    // Update status text
-    elStatus.textContent = gameActive ? `Your turn — ${currentPlayer}` : "Game Over";
-
-    // Update move list
-    elMoveList.innerHTML = playerMoves.map(i => `<span class="chip mark x">X${i}</span>`).join('') +
-                           aiMoves.map(i => `<span class="chip mark o">O${i}</span>`).join('');
+        // Make next-to-disappear move transparent
+        if (playerMoves[0] === i && playerMoves.length === 3) {
+            c.classList.add("fading");
+        }
+        if (aiMoves[0] === i && aiMoves.length === 3) {
+            c.classList.add("fading");
+        }
+    });
 }
 
-
-/* ===========================================================
-   GAME LOGIC
-============================================================ */
-
-function checkWin(currentBoard, symbol) {
-    return winPatterns.some(p => 
-        p.every(i => currentBoard[i] === symbol)
-    );
-}
-
-function endGame(text) {
-    gameActive = false;
-    if (text === "You Win!") scorePlayer++;
-    if (text === "AI Wins!") scoreAI++;
-    
-    // Update score UI
-    elScore.textContent = `${scorePlayer} — ${scoreAI}`;
-
-    // Show popup
-    document.getElementById("resultText").textContent = text;
-    document.getElementById("popup").style.display = "flex";
-}
-
-function isDraw(currentBoard) {
-    // In 3-token Tic Tac Toe, a draw is when the board is full AND no one has won, 
-    // OR the game enters a loop (which isn't tracked here, but we can check if board is full)
-    if (currentBoard.every(c => c !== "") && !checkWin(currentBoard, player) && !checkWin(currentBoard, ai)) {
-        return true;
-    }
-    return false;
-}
-
-// Player's turn
 function playerClick(i) {
-    if (!gameActive || currentPlayer !== player) return;
-    
-    const recycled = (playerMoves.length === 3 && playerMoves[0] === i);
-    
-    if (board[i] !== "" && !recycled) {
-        return; // Cell is occupied by another piece (not the one to be recycled)
-    }
-    
-    saveState();
-    placePiece(i, player, playerMoves, recycled);
-
-    if (checkWin(board, player)) return endGame("You Win!");
-
-    currentPlayer = ai;
-    updateUI();
-    
-    // Use setTimeout to allow UI to update before AI moves
-    setTimeout(aiMove, 300);
+    if (board[i] !== "") {
+        // Allow clicking faded piece to recycle it
+        if (playerMoves[0] === i) {
+            placePlayer(i, true);
+        }
+        return;
+    }
+    placePlayer(i, false);
 }
 
-// AI's turn
+function placePlayer(i, recycled) {
+    if (!recycled) {
+        board[i] = player;
+        playerMoves.push(i);
+    } else {
+        // Recycle oldest
+        let old = playerMoves.shift();
+        board[old] = "";
+        board[i] = player;
+        playerMoves.push(i);
+    }
+
+    if (playerMoves.length > 3) {
+        let old = playerMoves.shift();
+        board[old] = "";
+    }
+
+    updateUI();
+    if (checkWin(player)) return endGame("You Win!");
+    if (isDraw()) return endGame("Draw!");
+
+    setTimeout(aiMove, 300);
+}
+
 function aiMove() {
-    if (!gameActive || currentPlayer !== ai) return;
-    
-    let best = bestMove(board, ai, aiMoves, playerMoves);
-    let i = best.index;
-    let recycled = (aiMoves.length === 3 && aiMoves[0] === i);
+    let best = bestMove();
+    let i = best;
 
-    saveState();
-    placePiece(i, ai, aiMoves, recycled);
+    // Recycle AI transparent piece if clicking same faded cell
+    if (board[i] !== "" && aiMoves[0] === i) {
+        placeAI(i, true);
+        return;
+    }
 
-    if (checkWin(board, ai)) return endGame("AI Wins!");
-    if (isDraw(board)) return endGame("Draw!");
-    
-    currentPlayer = player;
-    updateUI();
+    placeAI(i, false);
 }
 
-function placePiece(i, symbol, movesArray, recycled) {
-    if (!recycled) {
-        board[i] = symbol;
-        movesArray.push(i);
-    } else {
-        // Recycle oldest
-        let old = movesArray.shift();
-        board[old] = "";
-        board[i] = symbol;
-        movesArray.push(i);
-    }
+function placeAI(i, recycled) {
+    if (!recycled) {
+        board[i] = ai;
+        aiMoves.push(i);
+    } else {
+        let old = aiMoves.shift();
+        board[old] = "";
+        board[i] = ai;
+        aiMoves.push(i);
+    }
 
-    // If not a recycling move, check if a piece needs to disappear
-    if (!recycled && movesArray.length > 3) {
-        let old = movesArray.shift();
-        board[old] = "";
-    }
+    if (aiMoves.length > 3) {
+        let old = aiMoves.shift();
+        board[old] = "";
+    }
+
+    updateUI();
+    if (checkWin(ai)) return endGame("AI Wins!");
+    if (isDraw()) return endGame("Draw!");
 }
 
-
-/* ===========================================================
-   MINIMAX AI (Pro Edition logic)
-============================================================ */
-// Note: This is a simplified minimax implementation without full alpha-beta pruning 
-// or a depth setting for brevity, but it's much better than random.
-
-function evaluate(currentBoard) {
-    if (checkWin(currentBoard, ai)) return 100; // AI wins is best
-    if (checkWin(currentBoard, player)) return -100; // Player wins is worst
-    return 0; // Draw or ongoing
+function checkWin(symbol) {
+    return winPatterns.some(p => 
+        p.every(i => board[i] === symbol)
+    );
 }
 
-function minimax(currentBoard, isMaximizing, currentAiMoves, currentPlayerMoves, depth) {
-    const score = evaluate(currentBoard);
-    if (score !== 0) return score - depth; // Prioritize faster wins/slower losses
-    if (depth === 0) return 0; // End recursion at depth limit
-
-    const currentSymbol = isMaximizing ? ai : player;
-    const currentMovesArray = isMaximizing ? currentAiMoves : currentPlayerMoves;
-    const opponentMovesArray = isMaximizing ? currentPlayerMoves : currentAiMoves;
-    
-    let bestEval = isMaximizing ? -Infinity : Infinity;
-    
-    // Potential moves are empty cells OR the oldest piece (recycling move)
-    const possibleMoves = [];
-    for(let i=0; i<9; i++) {
-        if (currentBoard[i] === "") possibleMoves.push({index: i, recycled: false});
-    }
-    if (currentMovesArray.length === 3) {
-        possibleMoves.push({index: currentMovesArray[0], recycled: true});
-    }
-    
-    for (const move of possibleMoves) {
-        // Simulate move
-        const newBoard = [...currentBoard];
-        const newMovesArray = [...currentMovesArray];
-        const newOpponentMovesArray = [...opponentMovesArray];
-        
-        const {index: i, recycled} = move;
-
-        // Handle old piece removal for the current player
-        if (!recycled) {
-            newBoard[i] = currentSymbol;
-            newMovesArray.push(i);
-        } else {
-            let old = newMovesArray.shift();
-            newBoard[old] = "";
-            newBoard[i] = currentSymbol;
-            newMovesArray.push(i);
-        }
-
-        if (!recycled && newMovesArray.length > 3) {
-            let old = newMovesArray.shift();
-            newBoard[old] = "";
-        }
-        
-        // Recursive call
-        const evaluation = minimax(newBoard, !isMaximizing, 
-            isMaximizing ? newMovesArray : newOpponentMovesArray, 
-            isMaximizing ? newOpponentMovesArray : newMovesArray, 
-            depth - 1);
-        
-        if (isMaximizing) {
-            bestEval = Math.max(bestEval, evaluation);
-        } else {
-            bestEval = Math.min(bestEval, evaluation);
-        }
-    }
-
-    return bestEval;
+function isDraw() {
+    return board.every(c => c !== "");
 }
-
 
 function bestMove() {
-    if (elDifficulty.value === "random") {
-        // Original Simple AI logic (for "random" difficulty)
-        for (let i=0; i<9; i++) {
-            if (board[i] === "") return { index: i };
-        }
-        return { index: aiMoves[0] }; // fallback to recycling
-    }
-    
-    // Minimax AI logic
-    let bestVal = -Infinity;
-    let bestMoveIndex = -1;
-    const depth = parseInt(elDepth.value);
-    
-    const possibleMoves = [];
-    for(let i=0; i<9; i++) {
-        if (board[i] === "") possibleMoves.push({index: i, recycled: false});
-    }
-    if (aiMoves.length === 3) {
-        possibleMoves.push({index: aiMoves[0], recycled: true});
-    }
-    
-    for (const move of possibleMoves) {
-        const {index: i, recycled} = move;
-        
-        // Simulate move
-        const newBoard = [...board];
-        const newAiMoves = [...aiMoves];
-        const newPlayerMoves = [...playerMoves];
-
-        if (!recycled) {
-            newBoard[i] = ai;
-            newAiMoves.push(i);
-        } else {
-            let old = newAiMoves.shift();
-            newBoard[old] = "";
-            newBoard[i] = ai;
-            newAiMoves.push(i);
-        }
-
-        if (!recycled && newAiMoves.length > 3) {
-            let old = newAiMoves.shift();
-            newBoard[old] = "";
-        }
-
-        // Evaluate next move for player (minimizing player's score)
-        let moveVal = minimax(newBoard, false, newAiMoves, newPlayerMoves, depth);
-        
-        if (moveVal > bestVal) {
-            bestVal = moveVal;
-            bestMoveIndex = i;
-        }
-    }
-
-    // If minimax found no winning move or a draw, and there are open cells,
-    // it might return -1. Fallback to an open cell or recycling.
-    if (bestMoveIndex === -1 && possibleMoves.length > 0) {
-        return possibleMoves[0]; 
-    }
-    
-    return { index: bestMoveIndex };
+    // Simple AI: choose any empty, or replace its fading
+    // (can replace with minimax later)
+    for (let i=0; i<9; i++) {
+        if (board[i] === "") return i;
+    }
+    return aiMoves[0]; // fallback
 }
 
+// ---------------- Popup ----------------
+function endGame(text) {
+    if (text === "You Win!") scorePlayer++;
+    if (text === "AI Wins!") scoreAI++;
 
-/* ===========================================================
-   CONTROLS
-============================================================ */
+    document.getElementById("score").textContent =
+        `You ${scorePlayer} — ${scoreAI} AI`;
+
+    document.getElementById("resultText").textContent = text;
+    document.getElementById("popup").style.display = "flex";
+}
+
 function restartGame() {
-    board = ["","","","","","","","",""];
-    playerMoves = [];
-    aiMoves = [];
-    gameHistory = [];
-    currentPlayer = player;
-    gameActive = true;
-    document.getElementById("popup").style.display = "none";
-    elUndo.disabled = true;
-    createBoard();
+    board = ["","","","","","","","",""];
+    playerMoves = [];
+    aiMoves = [];
+    document.getElementById("popup").style.display = "none";
+    createBoard();
 }
 
 function resetAll() {
-    scorePlayer = 0;
-    scoreAI = 0;
-    restartGame();
-    elScore.textContent = "0 — 0";
+    scorePlayer = 0;
+    scoreAI = 0;
+    restartGame();
+    document.getElementById("score").textContent = "You 0 — 0 AI";
 }
-
-function undoMove() {
-    if (gameHistory.length > 1) {
-        // Remove the current state and the AI's last move (Player's move is at -2)
-        gameHistory.pop(); // Remove AI's move state
-        const lastState = gameHistory.pop(); // Get Player's move state
-
-        board = [...lastState.board];
-        playerMoves = [...lastState.playerMoves];
-        aiMoves = [...lastState.aiMoves];
-        currentPlayer = player; // Always set back to player's turn
-        gameActive = true;
-        
-        elUndo.disabled = gameHistory.length <= 1;
-        updateUI();
-    }
-}
-
-elRestart.onclick = restartGame;
-elUndo.onclick = undoMove;
-elDifficulty.onchange = restartGame;
-elDepth.onchange = restartGame; // Restart game when settings change
-
-// Initial setup
-createBoard();
-saveState(); // Save initial state (for first undo)
-
 </script>
 
 </body>
